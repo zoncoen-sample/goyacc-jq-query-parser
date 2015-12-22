@@ -13,6 +13,14 @@ var parseTests = []struct {
 	{".", EmptyFilter{}},
 	{".key", KeyFilter{Key: "key"}},
 	{".[0]", IndexFilter{Index: "0"}},
+	{".key | .[0]", BinOp{Left: KeyFilter{Key: "key"}, Op: Token{Token: 57351, Literal: "|"}, Right: IndexFilter{Index: "0"}}},
+	{".first | .second | .third", BinOp{
+		Left: BinOp{
+			Left:  KeyFilter{Key: "first"},
+			Op:    Token{Token: 57351, Literal: "|"},
+			Right: KeyFilter{Key: "second"}},
+		Op:    Token{Token: 57351, Literal: "|"},
+		Right: KeyFilter{Key: "third"}}},
 }
 
 func parse(r io.Reader) Filter {

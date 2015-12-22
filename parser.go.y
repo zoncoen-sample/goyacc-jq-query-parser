@@ -25,6 +25,12 @@ type KeyFilter struct {
 type IndexFilter struct {
     Index string
 }
+
+type BinOp struct {
+    Left  Filter
+    Op    Token
+    Right Filter
+}
 %}
 
 %union{
@@ -34,6 +40,8 @@ type IndexFilter struct {
 
 %type<expr> program filter empty_filter key_filter index_filter
 %token<token> PERIOD STRING INT LBRACK RBRACK
+
+%left<token> PIPE
 
 %%
 
@@ -56,6 +64,10 @@ filter
     | index_filter
     {
         $$ = $1
+    }
+    | filter PIPE filter
+    {
+        $$ = BinOp{Left: $1, Op: $2, Right: $3}
     }
 
 empty_filter
@@ -99,6 +111,9 @@ func (l *Lexer) Lex(lval *yySymType) int {
     }
     if token == int(']') {
         token = RBRACK
+    }
+    if token == int('|') {
+        token = PIPE
     }
     lval.token = Token{Token: token, Literal: l.TokenText()}
     return token
