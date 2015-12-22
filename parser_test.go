@@ -11,6 +11,8 @@ var parseTests = []struct {
 	ast  Filter
 }{
 	{".", EmptyFilter{}},
+	{".key", KeyFilter{Key: "key"}},
+	{".[0]", IndexFilter{Index: "0"}},
 }
 
 func parse(r io.Reader) Filter {

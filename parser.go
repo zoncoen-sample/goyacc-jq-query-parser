@@ -14,14 +14,22 @@ import (
 type Filter interface{}
 
 type Token struct {
-	token   int
-	literal string
+	Token   int
+	Literal string
 }
 
 type EmptyFilter struct {
 }
 
-//line parser.go.y:22
+type KeyFilter struct {
+	Key string
+}
+
+type IndexFilter struct {
+	Index string
+}
+
+//line parser.go.y:30
 type yySymType struct {
 	yys   int
 	token Token
@@ -29,12 +37,20 @@ type yySymType struct {
 }
 
 const PERIOD = 57346
+const STRING = 57347
+const INT = 57348
+const LBRACK = 57349
+const RBRACK = 57350
 
 var yyToknames = [...]string{
 	"$end",
 	"error",
 	"$unk",
 	"PERIOD",
+	"STRING",
+	"INT",
+	"LBRACK",
+	"RBRACK",
 }
 var yyStatenames = [...]string{}
 
@@ -42,7 +58,7 @@ const yyEofCode = 1
 const yyErrCode = 2
 const yyMaxDepth = 200
 
-//line parser.go.y:45
+//line parser.go.y:79
 
 type Lexer struct {
 	scanner.Scanner
@@ -54,7 +70,19 @@ func (l *Lexer) Lex(lval *yySymType) int {
 	if token == int('.') {
 		token = PERIOD
 	}
-	lval.token = Token{token: token, literal: l.TokenText()}
+	if token == scanner.Ident {
+		token = STRING
+	}
+	if token == scanner.Int {
+		token = INT
+	}
+	if token == int('[') {
+		token = LBRACK
+	}
+	if token == int(']') {
+		token = RBRACK
+	}
+	lval.token = Token{Token: token, Literal: l.TokenText()}
 	return token
 }
 
@@ -76,41 +104,44 @@ var yyExca = [...]int{
 	-2, 0,
 }
 
-const yyNprod = 3
+const yyNprod = 8
 const yyPrivate = 57344
 
 var yyTokenNames []string
 var yyStates []string
 
-const yyLast = 3
+const yyLast = 10
 
 var yyAct = [...]int{
 
-	3, 2, 1,
+	10, 7, 5, 8, 9, 6, 4, 3, 2, 1,
 }
 var yyPact = [...]int{
 
-	-4, -1000, -1000, -1000,
+	1, -1000, -1000, -1000, -1000, -1000, -4, -1000, -2, -8,
+	-1000,
 }
 var yyPgo = [...]int{
 
-	0, 2, 1,
+	0, 9, 8, 7, 6, 2,
 }
 var yyR1 = [...]int{
 
-	0, 1, 2,
+	0, 1, 2, 2, 2, 3, 4, 5,
 }
 var yyR2 = [...]int{
 
-	0, 1, 1,
+	0, 1, 1, 1, 1, 1, 2, 4,
 }
 var yyChk = [...]int{
 
-	-1000, -1, -2, 4,
+	-1000, -1, -2, -3, -4, -5, 4, 5, 7, 6,
+	8,
 }
 var yyDef = [...]int{
 
-	0, -2, 1, 2,
+	0, -2, 1, 2, 3, 4, 5, 6, 0, 0,
+	7,
 }
 var yyTok1 = [...]int{
 
@@ -118,7 +149,7 @@ var yyTok1 = [...]int{
 }
 var yyTok2 = [...]int{
 
-	2, 3, 4,
+	2, 3, 4, 5, 6, 7, 8,
 }
 var yyTok3 = [...]int{
 	0,
@@ -466,16 +497,46 @@ yydefault:
 
 	case 1:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.go.y:34
+		//line parser.go.y:42
 		{
 			yyVAL.expr = yyDollar[1].expr
 			yylex.(*Lexer).result = yyVAL.expr
 		}
 	case 2:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.go.y:41
+		//line parser.go.y:49
+		{
+			yyVAL.expr = yyDollar[1].expr
+		}
+	case 3:
+		yyDollar = yyS[yypt-1 : yypt+1]
+		//line parser.go.y:53
+		{
+			yyVAL.expr = yyDollar[1].expr
+		}
+	case 4:
+		yyDollar = yyS[yypt-1 : yypt+1]
+		//line parser.go.y:57
+		{
+			yyVAL.expr = yyDollar[1].expr
+		}
+	case 5:
+		yyDollar = yyS[yypt-1 : yypt+1]
+		//line parser.go.y:63
 		{
 			yyVAL.expr = EmptyFilter{}
+		}
+	case 6:
+		yyDollar = yyS[yypt-2 : yypt+1]
+		//line parser.go.y:69
+		{
+			yyVAL.expr = KeyFilter{Key: yyDollar[2].token.Literal}
+		}
+	case 7:
+		yyDollar = yyS[yypt-4 : yypt+1]
+		//line parser.go.y:75
+		{
+			yyVAL.expr = IndexFilter{Index: yyDollar[3].token.Literal}
 		}
 	}
 	goto yystack /* stack new state and value */

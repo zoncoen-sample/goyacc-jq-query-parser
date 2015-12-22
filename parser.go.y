@@ -11,11 +11,19 @@ import (
 type Filter interface{}
 
 type Token struct {
-    token   int
-    literal string
+    Token   int
+    Literal string
 }
 
 type EmptyFilter struct {
+}
+
+type KeyFilter struct {
+    Key string
+}
+
+type IndexFilter struct {
+    Index string
 }
 %}
 
@@ -24,22 +32,48 @@ type EmptyFilter struct {
     expr  Filter
 }
 
-%type<expr> filter empty_filter
-%token<token> PERIOD
+%type<expr> program filter empty_filter key_filter index_filter
+%token<token> PERIOD STRING INT LBRACK RBRACK
 
 %%
+
+program
+    : filter
+    {
+        $$ = $1
+        yylex.(*Lexer).result = $$
+    }
 
 filter
     : empty_filter
     {
         $$ = $1
-        yylex.(*Lexer).result = $$
+    }
+    | key_filter
+    {
+        $$ = $1
+    }
+    | index_filter
+    {
+        $$ = $1
     }
 
 empty_filter
     : PERIOD
     {
         $$ = EmptyFilter{}
+    }
+
+key_filter
+    : PERIOD STRING
+    {
+        $$ = KeyFilter{Key: $2.Literal}
+    }
+
+index_filter
+    : PERIOD LBRACK INT RBRACK
+    {
+        $$ = IndexFilter{Index: $3.Literal}
     }
 
 %%
@@ -54,7 +88,19 @@ func (l *Lexer) Lex(lval *yySymType) int {
     if token == int('.') {
         token = PERIOD
     }
-    lval.token = Token{token: token, literal: l.TokenText()}
+    if token == scanner.Ident {
+        token = STRING
+    }
+    if token == scanner.Int {
+        token = INT
+    }
+    if token == int('[') {
+        token = LBRACK
+    }
+    if token == int(']') {
+        token = RBRACK
+    }
+    lval.token = Token{Token: token, Literal: l.TokenText()}
     return token
 }
 
